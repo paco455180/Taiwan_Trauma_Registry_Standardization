@@ -13,7 +13,7 @@
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;line-height:1.7;}
+    font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;line-height:1.7;scroll-behavior:smooth;}
   .wrap{max-width:900px;margin:0 auto;padding:44px 24px 120px;}
 
   header.hero{border-bottom:2px solid var(--slate);padding-bottom:24px;margin-bottom:28px;}
@@ -27,6 +27,7 @@
   .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px;position:sticky;top:0;background:var(--bg);padding:12px 0;z-index:20;border-bottom:1px solid var(--line);}
   button.tool{font-family:'Noto Sans TC',sans-serif;font-size:13px;background:var(--slate);color:#fff;border:none;padding:9px 16px;border-radius:20px;cursor:pointer;}
   button.tool.secondary{background:#fff;color:var(--slate);border:1px solid var(--slate);}
+  button.tool.danger{background:#fff;color:var(--red);border:1px solid var(--red);}
   button.tool:hover{opacity:.85;}
   .progress{margin-left:auto;font-size:12.5px;color:var(--muted);align-self:center;font-family:'JetBrains Mono',monospace;}
 
@@ -52,7 +53,6 @@
   .field .code{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:var(--slate);}
   .field .fname{font-size:15.5px;font-weight:700;}
   
-  /* 狀態標籤樣式 */
   .newtag {font-size:11.5px; padding:2px 7px; border-radius:4px; font-weight:700;}
   .newtag.new {background:#C6F6D5; color:#22543D;}
   .newtag.edit {background:#FEEBC8; color:#7B341E;}
@@ -84,6 +84,28 @@
   .openq .qh{font-size:12.5px;color:var(--muted);margin-bottom:10px;}
   .openq textarea{width:100%;min-height:70px;border:1px solid var(--line);border-radius:6px;padding:10px 12px;font-family:inherit;font-size:14px;background:#FDFDFB;resize:vertical;}
 
+  /* 懸浮回到頂端按鈕樣式 */
+  .back-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: var(--slate);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    font-size: 18px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    z-index: 99;
+    transition: opacity 0.3s;
+  }
+  .back-to-top:hover { background: var(--blue); }
+
   @media(max-width:720px){
     .respondent-grid{grid-template-columns:1fr;}
     .scaleguide{grid-template-columns:1fr;}
@@ -91,13 +113,13 @@
     .radios .box{width:28px;height:28px;}
   }
   @media print{
-    .toolbar{display:none;}body{background:#fff;}
+    .toolbar, .back-to-top{display:none;}body{background:#fff;}
     .field,.openq,section.info{break-inside:avoid;}
   }
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="top">
   <header class="hero">
     <span class="eyebrow">台灣創傷登錄標準化 · Delphi 共識研究 ·115-2314-B-227-001 國科會 主持人 張育通</span>
     <h1>創傷登錄候選欄位 — 專家共識問卷</h1>
@@ -107,13 +129,14 @@
 
   <div class="internal-banner">
     <b>【內部團隊審閱註記】</b><br>
-    此版本為專家發放前的正式審閱稿。全題庫已完整包含詳細操作型定義、右側狀態標籤（決議新增、定義修正、爭議保留、維持原案），並具備「重要性、可行性、登錄層級」完整評分機制。
+    此版本為專家發放前的正式審閱稿。上方工具列已新增「清空所有填答」功能，右下角也具備隨頁面捲動的「回到頂端」懸浮按鈕。
   </div>
 
   <div class="toolbar">
     <button class="tool" onclick="submitOnline()">送出至團隊（線上回收）</button>
     <button class="tool secondary" onclick="exportCSV()">下載填答結果（CSV）</button>
     <button class="tool secondary" onclick="window.print()">列印本頁</button>
+    <button class="tool danger" onclick="clearAllAnswers()">清空所有填答</button>
     <span class="progress" id="progress">已完成 0 欄</span>
   </div>
 
@@ -142,6 +165,9 @@
   <div id="openblock"></div>
 
 </div>
+
+<!-- 回到頂端懸浮按鈕 -->
+<button class="back-to-top" id="backToTopBtn" onclick="scrollToTop()" title="回到頂端">▲</button>
 
 <script>
 const FIELDS = [
@@ -199,7 +225,7 @@ const FIELDS = [
   ["D11","外傷小組啟動","<b>【定義】</b> 急診是否因病患傷勢達標而啟動院內外傷小組機制。<br><b>【說明】</b> 依台灣臨床與醫院評鑑慣用語（原稱創傷活化層級）正名。","edit"],
   ["D12","燒傷面積（%TBSA）","<b>【定義】</b> 若為燒傷病患，其二度及三度燒傷佔全身體表面積的總百分比。","keep"]
 ]],
- ["E","院內照護","手術、加護與呼吸處置",[
+ ["E","院內照護","手術,加護與呼吸處置",[
   ["E01","到院後手術 (急診首次外傷手術)","<b>【定義】</b> 病患因本次創傷接受的第一次手術處置及術式碼。<br><b>【說明】</b> 僅追蹤急診首次手術，不強求追蹤住院期間所有重建手術，以減輕登錄負擔。","edit"],
   ["E02","外傷小組醫師到達時間","<b>【定義】</b> 啟動外傷小組後，專責醫師實際抵達病患床邊的時間。<br><b>【說明】</b> 用於評估急診醫療團隊的反應時效。","edit"],
   ["E03","ICU 入住（是否／天數）","<b>【定義】</b> 病患住院期間是否曾轉入加護病房照護，及入住總天數。","keep"],
@@ -366,6 +392,31 @@ function exportCSV(){
   const a=document.createElement('a');
   a.href=url;a.download='創傷登錄R2_'+(val('r_name')||'填答')+'.csv';
   document.body.appendChild(a);a.click();URL.revokeObjectURL(url);
+}
+
+// 清空所有填答功能
+function clearAllAnswers(){
+  if(!confirm('確定要清空所有填答內容與個人資料嗎？此動作無法復原。')) return;
+  document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
+  document.querySelectorAll('textarea').forEach(t=>t.value='');
+  document.querySelectorAll('.respondent-grid input').forEach(i=>i.value='');
+  updateProgress();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// 捲動顯示/隱藏「回到頂端」按鈕
+window.onscroll = function() {
+  const btn = document.getElementById("backToTopBtn");
+  if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+    btn.style.display = "flex";
+  } else {
+    btn.style.display = "none";
+  }
+};
+
+// 點擊回到頂端
+function scrollToTop() {
+  window.scrollTo({top: 0, behavior: 'smooth'});
 }
 </script>
 </body>
